@@ -50,15 +50,15 @@ def handle_data(param):
     VR = Num / Den * 100 if Den != 0 and Den is not None else None
 
     # 绘制信号图标
-    if WCCI is not None:
+    if WCCI[-1] is not None:
         # 当WCCI下穿+100
-        if CrossUnder(WCCI, 100):
+        if CrossUnder(WCCI[-1], 100):
             PlotIcon(True, h[-1], 1)
 
         # 当WCCI上穿-100
-        if CrossOver(WCCI, -100):
+        if CrossOver(WCCI[-1], -100):
             PlotIcon(True, l[-1], 2)
 
             # 当WCCI上穿-100且VR的值小于或等于100
-            if VR is not None and VR <= 100:
+            if VR[-1] is not None and VR[-1] <= 100:
                 PlotIcon(True, l[-1], 3)
