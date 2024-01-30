@@ -19,7 +19,7 @@ def handle_data(param):
         Avg = SMA(TYP, n, Weight=2)
         AvgDev = AvgDeviation(TYP, n)
         if Avg is not None and AvgDev is not None and AvgDev != 0:
-            WCCI = (TYP[-1] - Avg) / (m / 1000 * AvgDev)
+            WCCI = (TYP[-1] - Avg) *10000 / (m * AvgDev)
 
     PlotNumeric("WCCI", WCCI)
     PlotNumeric("A1", 100)
