@@ -23,14 +23,15 @@ def handle_WCCI(param):
             WCCI = (TYP[-1] - Avg) * 10000 / (m * AvgDev)
 
     signalPoint = None
-    if WCCI is not None and len(WCCI) > 1:
-        previous_WCCI = WCCI[-2]
+    if length > 1:
+        previous_WCCI = WCCI[-2] if length > 2 else None
         current_WCCI = WCCI[-1]
 
-        if previous_WCCI >= 100 and current_WCCI < 100:
-            signalPoint = High[-1]
-        elif previous_WCCI <= -100 and current_WCCI > -100:
-            signalPoint = Low[-1]
+        if previous_WCCI is not None and current_WCCI is not None:
+            if previous_WCCI >= 100 and current_WCCI < 100:
+                signalPoint = High[-1]
+            elif previous_WCCI <= -100 and current_WCCI > -100:
+                signalPoint = Low[-1]
 
     return WCCI, signalPoint
 
