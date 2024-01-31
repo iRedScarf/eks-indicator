@@ -1,6 +1,42 @@
-from PolestarCore import CurrentBar,Open,Close,High,Low,Vol,PlotNumeric,PlotIcon
-from PolestarPy.toolsfunc import SMA,REF,AvgDeviation,SummationFC,CrossOver,CrossUnder
+from PolestarCore import Open,Close,High,Low,Vol,PlotNumeric,PlotDot,ColorUp
+from PolestarPy.toolsfunc import SMA,AvgDeviation
 from PolestarPy.Series import NumericSeries
+
+def handle_WCCI(param):
+
+    n = param[0]
+    m = param[4]
+
+    c = Close()
+    h = High()
+    l = Low()
+
+    # WCCI
+    TYP = NumericSeries("WCCI")
+    TYP[-1] = (h[-1] + l[-1] + c[-1]) / 3
+
+    WCCI = None
+    if TYP[-1] is not None:
+        Avg = SMA(TYP, n, Weight=2)
+        AvgDev = AvgDeviation(TYP, n)
+        if Avg is not None and AvgDev is not None and AvgDev != 0:
+            WCCI = (TYP[-1] - Avg) * 10000 / (m * AvgDev)
+
+    if len(WCCI) > 1:
+        previous_WCCI = WCCI[-2]
+        current_WCCI = WCCI[-1]
+
+        if previous_WCCI >= 100 and current_WCCI < 100:
+            signalPoint = High[-1]
+
+        elif previous_WCCI <= -100 and current_WCCI > -100:
+            signalPoint = Low[-1]
+        else:
+            signalPoint = None
+    else:
+        signalPoint = None
+
+    return WCCI, signalPoint
 
 def handle_data(param):
 
@@ -24,41 +60,7 @@ def handle_data(param):
     WBBI = (sma1 + sma2 + sma3 + sma4) / 4
     PlotNumeric("WBBI",WBBI)
 
-    # WCCI
-    TYP = NumericSeries("WCCI")
-    TYP[-1] = (h[-1] + l[-1] + c[-1]) / 3
-
-    WCCI = None
-    if TYP[-1] is not None:
-        Avg = SMA(TYP, n1, Weight=2)
-        AvgDev = AvgDeviation(TYP, n1)
-        if Avg is not None and AvgDev is not None and AvgDev != 0:
-            WCCI = (TYP[-1] - Avg) / (m / 1000 * AvgDev)
-
-    # VR
-    LC = REF(c, 1) if CurrentBar() >= 1 else None
-
-    sUp = NumericSeries("VR")
-    sUp[-1] = v[-1] if LC is not None and c[-1] > LC else 0
-
-    sDown = NumericSeries("VR")
-    sDown[-1] = v[-1] if LC is not None and c[-1] <= LC else 0
-
-    Num = SummationFC(sUp, n2)
-    Den = SummationFC(sDown, n2)
-
-    VR = Num / Den * 100 if Den != 0 and Den is not None else None
-
-    # 绘制信号图标
-    if WCCI[-1] is not None:
-        # 当WCCI下穿+100
-        if CrossUnder(WCCI[-1], 100):
-            PlotIcon(True, h[-1], 1)
-
-        # 当WCCI上穿-100
-        if CrossOver(WCCI[-1], -100):
-            PlotIcon(True, l[-1], 2)
-
-            # 当WCCI上穿-100且VR的值小于或等于100
-            if VR[-1] is not None and VR[-1] <= 100:
-                PlotIcon(True, l[-1], 3)
+    signalPoint = handle_WCCI(param)
+    if signalPoint is not None:
+        PlotDot("WCCI",signalPoint,2,ColorUp())
+        
