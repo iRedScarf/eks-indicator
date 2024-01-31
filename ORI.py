@@ -15,23 +15,26 @@ def handle_WCCI(param):
     TYP = NumericSeries("WCCI")
     TYP[-1] = (h[-1] + l[-1] + c[-1]) / 3
 
-    WCCI = None
+    WCCI = NumericSeries("WCCI")
     if TYP[-1] is not None:
         Avg = SMA(TYP, n, Weight=2)
         AvgDev = AvgDeviation(TYP, n)
         if Avg is not None and AvgDev is not None and AvgDev != 0:
-            WCCI = (TYP[-1] - Avg) * 10000 / (m * AvgDev)
+            WCCI[-1] = (TYP[-1] - Avg) * 10000 / (m * AvgDev)
+        else:
+            WCCI[-1] = None
+    else:
+        WCCI[-1] = None
 
     signalPoint = None
-    if length > 1:
-        previous_WCCI = WCCI[-2] if length > 2 else None
+    if len(WCCI) > 1 and WCCI[-2] is not None and WCCI[-1] is not None:
+        previous_WCCI = WCCI[-2]
         current_WCCI = WCCI[-1]
 
-        if previous_WCCI is not None and current_WCCI is not None:
-            if previous_WCCI >= 100 and current_WCCI < 100:
-                signalPoint = High[-1]
-            elif previous_WCCI <= -100 and current_WCCI > -100:
-                signalPoint = Low[-1]
+        if previous_WCCI >= 100 and current_WCCI < 100:
+            signalPoint = h[-1]
+        elif previous_WCCI <= -100 and current_WCCI > -100:
+            signalPoint = l[-1]
 
     return WCCI, signalPoint
 
