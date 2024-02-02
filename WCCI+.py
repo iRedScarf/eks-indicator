@@ -17,15 +17,14 @@ def handle_data(param):
     TYP = NumericSeries("WCCI")
     TYP[-1] = (h[-1] + l[-1] + c[-1]) / 3
 
-    if TYP[-1] == None:
-        WCCI = None
-
-    else:
+    if TYP[-1] is not None:
         Avg = SMA(TYP, n, Weight=2)
         AvgDev = AvgDeviation(TYP, n)
-        if Avg == None or AvgDev == None or AvgDev == 0:
-            WCCI = None
-        else:
+        if Avg is not None and AvgDev is not None and AvgDev != 0:
             WCCI = (TYP[-1] - Avg) * 10000 / (m * AvgDev)
-            
+        else:
+            WCCI = None
+    else:
+        WCCI = None
+
     PlotNumeric("WCCI", WCCI)
