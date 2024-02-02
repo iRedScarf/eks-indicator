@@ -1,4 +1,4 @@
-from PolestarCore import Close, High, Low, PlotDot, ColorUp
+from PolestarCore import Close, High, Low, PlotDot, ColorUp, PlotNumeric
 from PolestarPy.toolsfunc import SMA, AvgDeviation
 from PolestarPy.Series import NumericSeries
 
@@ -14,31 +14,18 @@ def handle_data(param):
     h = High()
     l = Low()
 
-    TYP = NumericSeries("TYP")
+    TYP = NumericSeries("WCCI")
     TYP[-1] = (h[-1] + l[-1] + c[-1]) / 3
 
-    WCCI = NumericSeries("WCCI")
-    if TYP[-1] is not None:
+    if TYP[-1] == None:
+        WCCI = None
+
+    else:
         Avg = SMA(TYP, n, Weight=2)
         AvgDev = AvgDeviation(TYP, n)
-        if Avg is not None and AvgDev is not None and AvgDev != 0:
-            WCCI[-1] = (TYP[-1] - Avg) * 10000 / (m * AvgDev)
+        if Avg == None or AvgDev == None or AvgDev == 0:
+            WCCI = None
         else:
-            WCCI[-1] = None
-    else:
-        WCCI[-1] = None
-
-    signalPoint = None
-    if len(WCCI) > 1 and WCCI[-2] is not None and WCCI[-1] is not None:
-        previous_WCCI = WCCI[-2]
-        current_WCCI = WCCI[-1]
-
-        if previous_WCCI >= 100 and current_WCCI < 100:
-            signalPoint = h[-1] + 1
-        elif previous_WCCI <= -100 and current_WCCI > -100:
-            signalPoint = l[-1] - 1
-
-    if signalPoint is not None:
-        PlotDot("WCCI", signalPoint, 2, ColorUp())
-
-    return WCCI, signalPoint
+            WCCI = (TYP[-1] - Avg) * 10000 / (m * AvgDev)
+            
+    PlotNumeric("WCCI", WCCI)
