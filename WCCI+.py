@@ -27,4 +27,19 @@ def handle_data(param):
     else:
         WCCI = None
 
-    PlotNumeric("WCCI", WCCI)
+    WCCI_series = NumericSeries("WCCI_values")
+    if WCCI is not None:
+        WCCI_series[-1] = WCCI
+
+    signalPoint = None
+    if len(WCCI_series) > 1 and WCCI_series[-2] is not None and WCCI_series[-1] is not None:
+        previous_WCCI = WCCI_series[-2]
+        current_WCCI = WCCI_series[-1]
+
+        if previous_WCCI >= 100 and current_WCCI < 100:
+            signalPoint = h[-1] + 1
+        elif previous_WCCI <= -100 and current_WCCI > -100:
+            signalPoint = l[-1] - 1
+
+    if signalPoint is not None:
+        PlotDot("WCCI", signalPoint, 2, ColorUp())
