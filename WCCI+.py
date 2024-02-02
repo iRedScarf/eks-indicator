@@ -1,8 +1,11 @@
-from PolestarCore import Close,High,Low,PlotDot,ColorUp
-from PolestarPy.toolsfunc import SMA,AvgDeviation
+from PolestarCore import Close, High, Low, PlotDot, ColorUp
+from PolestarPy.toolsfunc import SMA, AvgDeviation
 from PolestarPy.Series import NumericSeries
 
 def handle_data(param):
+
+    if len(param) < 2:
+        return None, None
 
     n = param[0]
     m = param[1]
@@ -11,7 +14,7 @@ def handle_data(param):
     h = High()
     l = Low()
 
-    TYP = NumericSeries("WCCI")
+    TYP = NumericSeries("TYP")
     TYP[-1] = (h[-1] + l[-1] + c[-1]) / 3
 
     WCCI = NumericSeries("WCCI")
@@ -35,7 +38,7 @@ def handle_data(param):
         elif previous_WCCI <= -100 and current_WCCI > -100:
             signalPoint = l[-1] - 1
 
-    return WCCI, signalPoint
-
     if signalPoint is not None:
         PlotDot("WCCI", signalPoint, 2, ColorUp())
+
+    return WCCI, signalPoint
