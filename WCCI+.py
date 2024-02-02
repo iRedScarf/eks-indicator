@@ -1,4 +1,4 @@
-from PolestarCore import Close, High, Low, PlotDot, ColorUp, PlotNumeric
+from PolestarCore import Close, High, Low, PlotDot, ColorUp, ColorDown
 from PolestarPy.toolsfunc import SMA, AvgDeviation
 from PolestarPy.Series import NumericSeries
 
@@ -16,30 +16,23 @@ def handle_data(param):
 
     TYP = NumericSeries("WCCI")
     TYP[-1] = (h[-1] + l[-1] + c[-1]) / 3
+    TYP[-2] = (h[-2] + l[-2] + c[-2]) / 3
 
-    if TYP[-1] is not None:
+    if TYP[-1] is not None and TYP[-2] is not None:
         Avg = SMA(TYP, n, Weight=2)
         AvgDev = AvgDeviation(TYP, n)
         if Avg is not None and AvgDev is not None and AvgDev != 0:
-            WCCI = (TYP[-1] - Avg) * 10000 / (m * AvgDev)
+            WCCI_1 = (TYP[-1] - Avg) * 10000 / (m * AvgDev)
+            WCCI_2 = (TYP[-2] - Avg) * 10000 / (m * AvgDev)
         else:
-            WCCI = None
+            WCCI_1 = None
+            WCCI_2 = None
     else:
-        WCCI = None
+        WCCI_1 = None
+        WCCI_2 = None
 
-    WCCI_series = NumericSeries("WCCI_values")
-    if WCCI is not None:
-        WCCI_series[-1] = WCCI
-
-    signalPoint = None
-    if len(WCCI_series) > 1 and WCCI_series[-2] is not None and WCCI_series[-1] is not None:
-        previous_WCCI = WCCI_series[-2]
-        current_WCCI = WCCI_series[-1]
-
-        if previous_WCCI >= 100 and current_WCCI < 100:
-            signalPoint = h[-1] + 1
-        elif previous_WCCI <= -100 and current_WCCI > -100:
-            signalPoint = l[-1] - 1
-
-    if signalPoint is not None:
-        PlotDot("WCCI", signalPoint, 2, ColorUp())
+    if WCCI_1 is not None and WCCI_2 is not None:
+        if WCCI_2 >=100 and WCCI_1 < 100:
+            PlotDot("WCCI", h[-1], 2, ColorDown())
+        if WCCI_2 <= -100 and WCCI_1 > -100:
+            PlotDot("WCCI", l[-1], 2, ColorUp())
