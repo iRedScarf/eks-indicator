@@ -1,4 +1,4 @@
-from PolestarCore import Close, High, Low, PlotDot, ColorUp, ColorDown
+from PolestarCore import Close, High, Low
 from PolestarPy.toolsfunc import SMA, AvgDeviation
 from PolestarPy.Series import NumericSeries
 
