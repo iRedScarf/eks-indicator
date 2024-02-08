@@ -11,20 +11,29 @@ def handle_WCCI(param):
     l = Low()
 
     TYP = NumericSeries("WCCI")
-    TYP[-1] = (h[-1] + l[-1] + c[-1]) / 3
+    TYP[-1] = (float(h[-1]) + float(l[-1]) + float(c[-1])) / 3
 
-    if CurrentBar() == 0:
-        PrevWCCI = None
-    else:
-        PrevWCCI = (TYP[-2] - SMA(TYP, n, Weight=2)) * 10000 / (m * AvgDeviation(TYP, n))
+    PrevWCCI = None
+    if CurrentBar() > 0:
+        try:
+            # 确保所有操作数都转换为float
+            Avg = SMA(TYP, n, Weight=2)
+            AvgDev = AvgDeviation(TYP, n)
+            if Avg is not None and AvgDev is not None and AvgDev > 0:
+                PrevWCCI = (float(TYP[-2]) - float(Avg)) * 10000 / (float(m) * float(AvgDev))
+        except TypeError:
+            PrevWCCI = None
 
     WCCI = None
     WCCI_Val = None
     if TYP[-1] is not None:
         Avg = SMA(TYP, n, Weight=2)
         AvgDev = AvgDeviation(TYP, n)
-        if Avg is not None and AvgDev is not None and AvgDev != 0:
-            WCCI = (TYP[-1] - Avg) * 10000 / (m * AvgDev)
+        if Avg is not None and AvgDev is not None and AvgDev > 0:
+            try:
+                WCCI = (float(TYP[-1]) - float(Avg)) * 10000 / (float(m) * float(AvgDev))
+            except TypeError:
+                WCCI = None
 
             if PrevWCCI is not None:
                 if PrevWCCI > 100 and WCCI <= 100:
