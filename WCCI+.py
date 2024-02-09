@@ -62,3 +62,95 @@ def AvgDeviation(data, length):
     for i in range(max(0,len(data)-length), len(data)):
            SumValue +=abs(data[i] - Mean)
     return SumValue / length 
+
+
+def ParabolicSAR(AfStep,AfLimit):
+    oParClose = None
+    oParOpen = None
+    oPosition = None
+    oTransition = None
+
+    Af = NumericSeries("ParabolicSAR")
+    ParOpen = NumericSeries("ParabolicSAR")
+    Position = NumericSeries("ParabolicSAR")
+    HHValue = NumericSeries("ParabolicSAR")
+    LLValue = NumericSeries("ParabolicSAR")
+    if CurrentBar()==0:
+        Position[-1] = 1
+        oTransition = 1
+        Af[-1] = AfStep
+        HHValue[-1] = High()[-1]
+        LLValue[-1] = Low()[-1]
+        oParClose = LLValue[-1]
+        ParOpen[-1] = oParClose + Af[-1] * (HHValue[-1] - oParClose)
+        if ParOpen[-1] > LLValue[-1]:
+            ParOpen[-1] = LLValue[-1]
+    else:
+        oTransition = 0
+        HHValue[-1] = HHValue[-2] if HHValue[-2] > High()[-1] else High()[-1]
+        LLValue[-1] = LLValue[-2] if LLValue[-2] < Low()[-1] else Low()[-1]
+        if Position[-2] == 1:
+            if Low()[-1] <= ParOpen[-2]:
+                Position[-1] = -1
+                oTransition = -1
+                oParClose = HHValue[-1]
+                HHValue[-1] = High()[-1]
+                LLValue[-1]  = Low()[-1]
+                Af[-1] = AfStep
+                ParOpen[-1] = oParClose + Af[-1] * (LLValue[-1] - oParClose)
+
+                if ParOpen[-1] < High()[-1]:
+                   ParOpen[-1] = High()[-1]
+
+                if ParOpen[-1] < High()[-2]:
+                   ParOpen[-1] = High()[-2]
+            else:
+                Position[-1] = Position[-2]
+                oParClose = ParOpen[-2]
+                if HHValue[-1] > HHValue[-2] and Af[-2] < AfLimit:
+                    if Af[-2] + AfStep > AfLimit:
+                       Af[-1] = AfLimit
+                    else:
+                       Af[-1] = Af[-2] + AfStep
+                else:
+                    Af[-1] = Af[-2]
+                ParOpen[-1] = oParClose + Af[-1] * (HHValue[-1] - oParClose)
+                if ParOpen[-1] > Low()[-1]:
+                    ParOpen[-1] = Low()[-1]
+                if ParOpen[-1] > Low()[-2]:
+                    ParOpen[-1] = Low()[-2]
+        else:
+            if High()[-1] >= ParOpen[-2]:
+               Position[-1] = 1
+               oTransition = 1
+
+               oParClose = LLValue[-1]
+               HHValue[-1] = High()[-1]
+               LLValue[-1] = Low()[-1]
+
+               Af[-1] = AfStep
+               ParOpen[-1] = oParClose + Af[-1] * ( HHValue[-1] - oParClose)
+               if ParOpen[-1] > Low()[-1]:
+                  ParOpen[-1] = Low()[-1]
+
+               if ParOpen[-1] > Low()[-2]:
+                  ParOpen[-1] = Low()[-2]
+            else:
+                Position[-1] = Position[-2]
+                oParClose = ParOpen[-2]
+                if LLValue[-1] < LLValue[-2] and Af[-2] < AfLimit:
+                   if Af[-2] + AfStep > AfLimit:
+                      Af[-1] = AfLimit
+                   else:
+                      Af[-1] = Af[-2] + AfStep
+                else:
+                    Af[-1] = Af[-2]
+                ParOpen[-1] = oParClose + Af[-1] * ( LLValue[-1] - oParClose )
+                if ParOpen[-1] < High()[-1]:
+                   ParOpen[-1] = High()[-1]
+
+                if ParOpen[-1] < High()[-2]:
+                   ParOpen[-1] = High()[-2]
+    oParOpen = ParOpen[-1]
+    oPosition = Position[-1]
+    return oParClose,oParOpen,oPosition,oTransition
