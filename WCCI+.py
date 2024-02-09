@@ -11,16 +11,15 @@ def handle_WCCI(param):
     l = Low()
 
     TYP = NumericSeries("WCCI")
-    TYP[-1] = (float(h[-1]) + float(l[-1]) + float(c[-1])) / 3
+    TYP[-1] = (h[-1] + l[-1] + c[-1]) / 3
 
     PrevWCCI = None
     if CurrentBar() > 0:
         try:
-            # 确保所有操作数都转换为float
             Avg = SMA(TYP, n, Weight=2)
             AvgDev = AvgDeviation(TYP, n)
             if Avg is not None and AvgDev is not None and AvgDev > 0:
-                PrevWCCI = (float(TYP[-2]) - float(Avg)) * 10000 / (float(m) * float(AvgDev))
+                PrevWCCI = (TYP[-2] - Avg) * 10000 / (m * AvgDev)
         except TypeError:
             PrevWCCI = None
 
@@ -31,7 +30,7 @@ def handle_WCCI(param):
         AvgDev = AvgDeviation(TYP, n)
         if Avg is not None and AvgDev is not None and AvgDev > 0:
             try:
-                WCCI = (float(TYP[-1]) - float(Avg)) * 10000 / (float(m) * float(AvgDev))
+                WCCI = (TYP[-1] - (Avg) * 10000 / (m * AvgDev)
             except TypeError:
                 WCCI = None
 
@@ -43,8 +42,23 @@ def handle_WCCI(param):
 
     return WCCI_Val
 
-def handle_data(param):
-    WCCI_Val = handle_WCCI(param)
-    if WCCI_Val is not None:
-        PlotDot("WCCI", WCCI_Val, 2, ColorUp())
-        
+def SMA(Price, Length,Weight=1):
+    Length = int(Length)
+    if Length==0:
+        return None
+    SMAValue = NumericSeries("SMA")
+    if len(Price) == 1:
+        SMAValue[-1] = Price[0]
+    else: 
+        SMAValue[-1] = (SMAValue[-2]*(Length-Weight)+Price[-1]*Weight)/Length
+    return SMAValue()
+
+def AvgDeviation(data, length):
+    Mean = Ma(data, length)
+    if Mean==None:
+        return None
+    SumValue = 0
+    length = int(length)
+    for i in range(max(0,len(data)-length), len(data)):
+           SumValue +=abs(data[i] - Mean)
+    return SumValue / length 
