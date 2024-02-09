@@ -64,93 +64,49 @@ def AvgDeviation(data, length):
     return SumValue / length 
 
 
-def ParabolicSAR(AfStep,AfLimit):
-    oParClose = None
-    oParOpen = None
-    oPosition = None
-    oTransition = None
+def handle_WCCI(close_prices, high_prices, low_prices, n=12, m=125):
+    # 确保输入数据有效
+    if len(close_prices) == 0 or len(high_prices) == 0 or len(low_prices) == 0:
+        return None
 
-    Af = NumericSeries("ParabolicSAR")
-    ParOpen = NumericSeries("ParabolicSAR")
-    Position = NumericSeries("ParabolicSAR")
-    HHValue = NumericSeries("ParabolicSAR")
-    LLValue = NumericSeries("ParabolicSAR")
-    if CurrentBar()==0:
-        Position[-1] = 1
-        oTransition = 1
-        Af[-1] = AfStep
-        HHValue[-1] = High()[-1]
-        LLValue[-1] = Low()[-1]
-        oParClose = LLValue[-1]
-        ParOpen[-1] = oParClose + Af[-1] * (HHValue[-1] - oParClose)
-        if ParOpen[-1] > LLValue[-1]:
-            ParOpen[-1] = LLValue[-1]
-    else:
-        oTransition = 0
-        HHValue[-1] = HHValue[-2] if HHValue[-2] > High()[-1] else High()[-1]
-        LLValue[-1] = LLValue[-2] if LLValue[-2] < Low()[-1] else Low()[-1]
-        if Position[-2] == 1:
-            if Low()[-1] <= ParOpen[-2]:
-                Position[-1] = -1
-                oTransition = -1
-                oParClose = HHValue[-1]
-                HHValue[-1] = High()[-1]
-                LLValue[-1]  = Low()[-1]
-                Af[-1] = AfStep
-                ParOpen[-1] = oParClose + Af[-1] * (LLValue[-1] - oParClose)
+    # 计算TYP价格
+    typ_prices = [(h + l + c) / 3 for h, l, c in zip(high_prices, low_prices, close_prices)]
 
-                if ParOpen[-1] < High()[-1]:
-                   ParOpen[-1] = High()[-1]
+    # 定义简单移动平均（SMA）和平均偏差（AvgDeviation）的内部计算逻辑
+    def SMA(prices, length):
+        if length <= 0 or length > len(prices):
+            return None
+        return sum(prices[-length:]) / length
 
-                if ParOpen[-1] < High()[-2]:
-                   ParOpen[-1] = High()[-2]
-            else:
-                Position[-1] = Position[-2]
-                oParClose = ParOpen[-2]
-                if HHValue[-1] > HHValue[-2] and Af[-2] < AfLimit:
-                    if Af[-2] + AfStep > AfLimit:
-                       Af[-1] = AfLimit
-                    else:
-                       Af[-1] = Af[-2] + AfStep
-                else:
-                    Af[-1] = Af[-2]
-                ParOpen[-1] = oParClose + Af[-1] * (HHValue[-1] - oParClose)
-                if ParOpen[-1] > Low()[-1]:
-                    ParOpen[-1] = Low()[-1]
-                if ParOpen[-1] > Low()[-2]:
-                    ParOpen[-1] = Low()[-2]
+    def AvgDeviation(prices, length):
+        mean = SMA(prices, length)
+        if mean is None:
+            return None
+        return sum([abs(price - mean) for price in prices[-length:]]) / length
+
+    # 计算WCCI
+    wcci_val = None  # 最终返回的值
+
+    if len(typ_prices) > 1:
+        # 计算前一周期的WCCI值
+        avg_prev = SMA(typ_prices[:-1], n)
+        avg_dev_prev = AvgDeviation(typ_prices[:-1], n)
+        if avg_prev is not None and avg_dev_prev is not None and avg_dev_prev > 0:
+            prev_wcci = (typ_prices[-2] - avg_prev) * 10000 / (m * avg_dev_prev)
         else:
-            if High()[-1] >= ParOpen[-2]:
-               Position[-1] = 1
-               oTransition = 1
+            prev_wcci = None
 
-               oParClose = LLValue[-1]
-               HHValue[-1] = High()[-1]
-               LLValue[-1] = Low()[-1]
+        # 计算当前周期的WCCI值
+        avg = SMA(typ_prices, n)
+        avg_dev = AvgDeviation(typ_prices, n)
+        if avg is not None and avg_dev is not None and avg_dev > 0:
+            wcci = (typ_prices[-1] - avg) * 10000 / (m * avg_dev)
+            # 根据前一周期和当前周期的WCCI值，确定返回值
+            if prev_wcci is not None:
+                if prev_wcci > 100 and wcci <= 100:
+                    wcci_val = high_prices[-1]  # 当前周期的最高价
+                elif prev_wcci < -100 and wcci >= -100:
+                    wcci_val = low_prices[-1]  # 当前周期的最低价
 
-               Af[-1] = AfStep
-               ParOpen[-1] = oParClose + Af[-1] * ( HHValue[-1] - oParClose)
-               if ParOpen[-1] > Low()[-1]:
-                  ParOpen[-1] = Low()[-1]
+    return wcci_val
 
-               if ParOpen[-1] > Low()[-2]:
-                  ParOpen[-1] = Low()[-2]
-            else:
-                Position[-1] = Position[-2]
-                oParClose = ParOpen[-2]
-                if LLValue[-1] < LLValue[-2] and Af[-2] < AfLimit:
-                   if Af[-2] + AfStep > AfLimit:
-                      Af[-1] = AfLimit
-                   else:
-                      Af[-1] = Af[-2] + AfStep
-                else:
-                    Af[-1] = Af[-2]
-                ParOpen[-1] = oParClose + Af[-1] * ( LLValue[-1] - oParClose )
-                if ParOpen[-1] < High()[-1]:
-                   ParOpen[-1] = High()[-1]
-
-                if ParOpen[-1] < High()[-2]:
-                   ParOpen[-1] = High()[-2]
-    oParOpen = ParOpen[-1]
-    oPosition = Position[-1]
-    return oParClose,oParOpen,oPosition,oTransition
