@@ -64,7 +64,7 @@ def AvgDeviation(data, length):
     return SumValue / length 
 
 
-def handle_WCCI(close_prices, high_prices, low_prices, n=12, m=125):
+def WCCI(close_prices, high_prices, low_prices, n, m):
     # 确保输入数据有效
     if len(close_prices) == 0 or len(high_prices) == 0 or len(low_prices) == 0:
         return None
@@ -72,20 +72,8 @@ def handle_WCCI(close_prices, high_prices, low_prices, n=12, m=125):
     # 计算TYP价格
     typ_prices = [(h + l + c) / 3 for h, l, c in zip(high_prices, low_prices, close_prices)]
 
-    # 定义简单移动平均（SMA）和平均偏差（AvgDeviation）的内部计算逻辑
-    def SMA(prices, length):
-        if length <= 0 or length > len(prices):
-            return None
-        return sum(prices[-length:]) / length
-
-    def AvgDeviation(prices, length):
-        mean = SMA(prices, length)
-        if mean is None:
-            return None
-        return sum([abs(price - mean) for price in prices[-length:]]) / length
-
     # 计算WCCI
-    wcci_val = None  # 最终返回的值
+    wcci_val = None
 
     if len(typ_prices) > 1:
         # 计算前一周期的WCCI值
